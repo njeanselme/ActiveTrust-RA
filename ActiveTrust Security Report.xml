@@ -1,0 +1,447 @@
+<form>
+  <label>ActiveTrust Security Report v1</label>
+  <description>System-created dashboard: Please clone before editing.</description>
+  <fieldset submitButton="true" autoRun="true">
+    <input type="time" token="time">
+      <label>Time</label>
+      <default>
+        <earliest>-1d</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+    <input type="text" token="domain_name">
+      <label>Domain Name (e.g. www.c2.se)</label>
+      <change>
+        <condition value="All">
+          <set token="query_str">
+            <![CDATA[ ]]>
+          </set>
+        </condition>
+        <condition value="*">
+          <set token="domain_name">($value$)</set>
+        </condition>
+      </change>
+      <prefix>(</prefix>
+      <suffix>)</suffix>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="multiselect" token="qtype">
+      <label>Query type</label>
+      <choice value="*">All</choice>
+      <search>
+        <query>index=ib_syslog RPZ-QNAME OR RPZ-IP process=named  | rex field=msg "rpz\s(?&lt;matched_on&gt;[^\s]*)\s(?&lt;mitigation&gt;[^\s]*)\srewrite\s(?&lt;domain_name&gt;[^\s]*)\s\[(?&lt;qtype&gt;\w*)\]\svia\s(?&lt;rpz_qname&gt;[^\s]*)" | stats count by qtype</query>
+        <earliest>$time.earliest$</earliest>
+        <latest>$time.latest$</latest>
+      </search>
+      <fieldForLabel>Query type</fieldForLabel>
+      <fieldForValue>qtype</fieldForValue>
+      <default>*</default>
+      <initialValue>*</initialValue>
+      <valuePrefix>"[</valuePrefix>
+      <valueSuffix>]"</valueSuffix>
+      <delimiter>OR</delimiter>
+      <prefix>(</prefix>
+      <suffix>)</suffix>
+    </input>
+    <input type="multiselect" token="matched_on">
+      <label>Matched On</label>
+      <choice value="*">All</choice>
+      <search>
+        <query>index=ib_syslog RPZ-QNAME OR RPZ-IP process=named  | rex field=msg "rpz\s(?&lt;matched_on&gt;[^\s]*)\s(?&lt;mitigation&gt;[^\s]*)\srewrite\s(?&lt;domain_name&gt;[^\s]*)\s\[(?&lt;qtype&gt;\w*)\]\svia\s(?&lt;rpz_qname&gt;[^\s]*)" | stats count by matched_on</query>
+        <earliest>$time.earliest$</earliest>
+        <latest>$time.latest$</latest>
+      </search>
+      <fieldForLabel>Matched on</fieldForLabel>
+      <fieldForValue>matched_on</fieldForValue>
+      <default>*</default>
+      <prefix>(</prefix>
+      <suffix>)</suffix>
+      <valuePrefix>RPZ-</valuePrefix>
+      <delimiter> OR </delimiter>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="text" token="src">
+      <label>Device (e.g. 192.168.1.2)</label>
+      <change>
+        <condition value="All">
+          <set token="src_ip_str">
+            <![CDATA[ ]]>
+          </set>
+        </condition>
+        <condition value="*">
+          <set token="src_ip_str">(src=$value$)</set>
+        </condition>
+      </change>
+      <prefix>src=</prefix>
+      <default>*</default>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="text" token="spt">
+      <label>Source port</label>
+      <change>
+        <condition value="All">
+          <set token="spt">
+            <![CDATA[ ]]>
+          </set>
+        </condition>
+        <condition value="*">
+          <set token="spt">(spt=$value$)</set>
+        </condition>
+      </change>
+      <prefix>spt=</prefix>
+      <initialValue>*</initialValue>
+      <default>*</default>
+    </input>
+    <input type="multiselect" token="mitigation">
+      <label>Response Code</label>
+      <choice value="*">All</choice>
+      <search>
+        <query>index=ib_syslog RPZ-QNAME OR RPZ-IP process=named  | rex field=msg "rpz\s(?&lt;matched_on&gt;[^\s]*)\s(?&lt;mitigation&gt;[^\s]*)\srewrite\s(?&lt;domain_name&gt;[^\s]*)\s\[(?&lt;qtype&gt;\w*)\]\svia\s(?&lt;rpz_qname&gt;[^\s]*)"             | stats count by mitigation</query>
+        <earliest>$time.earliest$</earliest>
+        <latest>$time.latest$</latest>
+      </search>
+      <fieldForLabel>Response Code</fieldForLabel>
+      <fieldForValue>mitigation</fieldForValue>
+      <default>*</default>
+      <prefix>(</prefix>
+      <suffix>)</suffix>
+      <valuePrefix>"|</valuePrefix>
+      <valueSuffix>|"</valueSuffix>
+      <delimiter> OR </delimiter>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="multiselect" token="feed_zone">
+      <label>Feed name</label>
+      <choice value="*">All</choice>
+      <search>
+        <query>index=ib_syslog RPZ-QNAME OR RPZ-IP process=named  | rex field=msg "rpz\s(?&lt;matched_on&gt;[^\s]*)\s(?&lt;mitigation&gt;[^\s]*)\srewrite\s(?&lt;domain_name&gt;[^\s]*)\s\[(?&lt;qtype&gt;\w*)\]\svia\s(?&lt;rpz_qname&gt;[^\s]*)" | eval feed_zone_qname = substr(rpz_qname, len(domain_name) + 2, len(rpz_qname)) | rex field=rpz_qname "rpz-ip.(?&lt;feed_zone_ip&gt;.*)" | eval feed_zone=case(matched_on == "QNAME", feed_zone_qname, matched_on == "IP", feed_zone_ip)| stats count by feed_zone</query>
+        <earliest>$time.earliest$</earliest>
+        <latest>$time.latest$</latest>
+      </search>
+      <fieldForLabel>Feed name</fieldForLabel>
+      <fieldForValue>feed_zone</fieldForValue>
+      <default>*</default>
+      <prefix>(</prefix>
+      <suffix>)</suffix>
+      <valuePrefix>"</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR </delimiter>
+      <initialValue>*</initialValue>
+    </input>
+    <input type="multiselect" token="host">
+      <label>Member</label>
+      <choice value="*">All</choice>
+      <search>
+        <query>index=ib_syslog RPZ-QNAME OR RPZ-IP process=named | stats count by host</query>
+        <earliest>$time.earliest$</earliest>
+        <latest>$time.latest$</latest>
+      </search>
+      <fieldForLabel>Member</fieldForLabel>
+      <fieldForValue>host</fieldForValue>
+      <default>*</default>
+      <prefix>(</prefix>
+      <suffix>)</suffix>
+      <valuePrefix>host="</valuePrefix>
+      <valueSuffix>"</valueSuffix>
+      <delimiter> OR </delimiter>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <title>Filtered Hits</title>
+      <single>
+        <search>
+          <query>index=ib_syslog RPZ-QNAME OR RPZ-IP process=named $domain_name$ $qtype$ $host$ $src$ $spt$ $matched_on$ $mitigation$ $feed_zone$ | stats count</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">none</option>
+        <option name="numberPrecision">0</option>
+        <option name="showSparkline">1</option>
+        <option name="showTrendIndicator">1</option>
+        <option name="trendColorInterpretation">standard</option>
+        <option name="trendDisplayMode">absolute</option>
+        <option name="useColors">0</option>
+        <option name="useThousandSeparators">1</option>
+        <option name="linkView">search</option>
+      </single>
+    </panel>
+    <panel>
+      <title>Filtered hits over time</title>
+      <chart>
+        <search>
+          <query>index=ib_syslog RPZ-QNAME OR RPZ-IP process=named  $domain_name$ $qtype$ $host$ $src$ $spt$ $matched_on$ $mitigation$ $feed_zone$ | timechart count</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.overflowMode">ellipsisNone</option>
+        <option name="charting.axisLabelsX.majorLabelStyle.rotation">0</option>
+        <option name="charting.axisTitleX.visibility">visible</option>
+        <option name="charting.axisTitleY.visibility">visible</option>
+        <option name="charting.axisTitleY2.visibility">visible</option>
+        <option name="charting.axisX.scale">linear</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.axisY2.enabled">0</option>
+        <option name="charting.axisY2.scale">inherit</option>
+        <option name="charting.chart.bubbleMaximumSize">50</option>
+        <option name="charting.chart.bubbleMinimumSize">10</option>
+        <option name="charting.chart.bubbleSizeBy">area</option>
+        <option name="charting.chart.nullValueMode">gaps</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.chart.sliceCollapsingThreshold">0.01</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.layout.splitSeries.allowIndependentYRanges">0</option>
+        <option name="charting.legend.labelStyle.overflowMode">ellipsisMiddle</option>
+        <option name="charting.legend.placement">right</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Filtered Logs</title>
+      <table id="filtered_logs">
+        <search>
+          <query>index=ib_syslog RPZ-QNAME OR RPZ-IP process=named $domain_name$ $qtype$ $host$ $src$ $spt$ $matched_on$ $mitigation$ $feed_zone$ | rex field=msg "rpz\s(?&lt;matched_on&gt;[^\s]*)\s(?&lt;mitigation&gt;[^\s]*)\srewrite\s(?&lt;domain_name&gt;[^\s]*)\s\[(?&lt;qtype&gt;\w*)\]\svia\s(?&lt;rpz_qname&gt;[^\s]*)" | eval feed_zone_qname = substr(rpz_qname, len(domain_name) + 2, len(rpz_qname)) | rex field=rpz_qname "rpz-ip.(?&lt;feed_zone_ip&gt;.*)" | eval feed_zone=case(matched_on == "QNAME", feed_zone_qname, matched_on == "IP", feed_zone_ip) | rex field=rpz_qname "(?&lt;cidr&gt;\d+)\.(?&lt;byte4&gt;\d+)\.(?&lt;byte3&gt;\d+)\.(?&lt;byte2&gt;\d+)\.(?&lt;byte1&gt;\d+)\.rpz-ip.*" | eval rpz_ip= byte1 +"."+ byte2 +"."+ byte3 +"."+ byte4 +"/" + cidr | lookup rpz_feed_tsig_key_lookup RPZ_FEED_ZONE AS feed_zone_qname OUTPUT TSIG_KEY | eval TSIG_KEY=if(isnull(TSIG_KEY),"None",TSIG_KEY) | addthreatstopdetails TSIG_KEY rpzorip rpz_qname| rename rpz_ip as "RPZ IP matched",domain_name as "Domain name", qtype as "Query type", src as "Device", spt as "Source port", mitigation as "Response code", matched_on as "Matched on", feed_zone as "Feed name", host as Member | table _time, "Domain name", "Query type", "Matched on", "RPZ IP matched", "Device", "Source port", "Response code", "Feed name", "Member", description</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">preview</option>
+        <option name="rowNumbers">false</option>
+        <option name="totalsRow">false</option>
+        <option name="wrap">true</option>
+        <option name="dataOverlayMode">none</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Top Client</title>
+      <table>
+        <search>
+          <query>index=ib_syslog RPZ-QNAME OR RPZ-IP process=named $domain_name$ $qtype$ $host$ $src$ $spt$ $matched_on$ $mitigation$ $feed_zone$ | rename src as "Client IP"|top limit=200 "Client IP"</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">cell</option>
+        <format type="color" field="count">
+          <colorPalette type="minMidMax" maxColor="#D6563C" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="percent"></format>
+        <drilldown>
+          <set token="src">src="$click.value$"</set>
+          <set token="form.src">$click.value$</set>
+        </drilldown>
+        <option name="wrap">true</option>
+        <option name="rowNumbers">false</option>
+        <option name="dataOverlayMode">heatmap</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Top source port</title>
+      <table>
+        <search>
+          <query>index=ib_syslog RPZ-QNAME OR RPZ-IP process=named $domain_name$ $qtype$ $host$ $src$ $spt$ $matched_on$ $mitigation$ $feed_zone$  | rename spt as "Source port" | top limit=200 "Source port"</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">cell</option>
+        <format type="color" field="count">
+          <colorPalette type="minMidMax" maxColor="#D6563C" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="percent"></format>
+        <drilldown>
+          <set token="spt">spt="$click.value$"</set>
+          <set token="form.spt">$click.value$</set>
+        </drilldown>
+        <option name="wrap">true</option>
+        <option name="rowNumbers">false</option>
+        <option name="dataOverlayMode">none</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Top Domain name</title>
+      <table>
+        <search>
+          <query>index=ib_syslog RPZ-QNAME OR RPZ-IP process=named $domain_name$ $qtype$ $host$ $src$ $spt$ $matched_on$ $mitigation$ $feed_zone$  | rex field=msg "rpz\s(?&lt;matched_on&gt;[^\s]*)\s(?&lt;mitigation&gt;[^\s]*)\srewrite\s(?&lt;domain_name&gt;[^\s]*)\s\[(?&lt;qtype&gt;\w*)\]\svia\s(?&lt;rpz_qname&gt;[^\s]*)" | rename domain_name as "Domain name"             | top limit=200 "Domain name"</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">cell</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="totalsRow">true</option>
+        <format type="color" field="count">
+          <colorPalette type="minMidMax" maxColor="#D6563C" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="percent"></format>
+        <drilldown>
+          <set token="domain_name">qname="$click.value$"</set>
+          <set token="form.domain_name">$click.value$</set>
+        </drilldown>
+        <option name="wrap">true</option>
+        <option name="rowNumbers">false</option>
+        <option name="dataOverlayMode">heatmap</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Top RPZ IP match</title>
+      <table>
+        <search>
+          <query>index=ib_syslog RPZ-QNAME OR RPZ-IP process=named $domain_name$ $qtype$ $host$ $src$ $spt$ $matched_on$ $mitigation$ $feed_zone$ | rex field=msg "rpz\s(?&lt;matched_on&gt;[^\s]*)\s(?&lt;mitigation&gt;[^\s]*)\srewrite\s(?&lt;domain_name&gt;[^\s]*)\s\[(?&lt;qtype&gt;\w*)\]\svia\s(?&lt;rpz_qname&gt;[^\s]*)" | eval feed_zone_qname = substr(rpz_qname, len(domain_name) + 2, len(rpz_qname)) | rex field=rpz_qname "rpz-ip.(?&lt;feed_zone_ip&gt;.*)" | eval feed_zone=case(matched_on == "QNAME", feed_zone_qname, matched_on == "IP", feed_zone_ip) | rex field=rpz_qname "(?&lt;cidr&gt;\d+)\.(?&lt;byte4&gt;\d+)\.(?&lt;byte3&gt;\d+)\.(?&lt;byte2&gt;\d+)\.(?&lt;byte1&gt;\d+)\.rpz-ip.*" | eval rpz_ip= byte1 +"."+ byte2 +"."+ byte3 +"."+ byte4 +"/" + cidr  | rename rpz_ip as "RPZ IP match"| top limit=200 "RPZ IP match"</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">none</option>
+        <format type="color" field="count">
+          <colorPalette type="minMidMax" maxColor="#D6563C" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="percent"></format>
+        <drilldown>
+          <set token="rpz_ip">"$click.value$"</set>
+          <set token="form.rpz_ip">$click.value$</set>
+        </drilldown>
+        <option name="wrap">true</option>
+        <option name="rowNumbers">false</option>
+        <option name="dataOverlayMode">heatmap</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Top Query type</title>
+      <table>
+        <search>
+          <query>index=ib_syslog RPZ-QNAME OR RPZ-IP process=named $domain_name$ $qtype$ $host$ $src$ $spt$ $matched_on$ $mitigation$ $feed_zone$ | rex field=msg "rpz\s(?&lt;matched_on&gt;[^\s]*)\s(?&lt;mitigation&gt;[^\s]*)\srewrite\s(?&lt;domain_name&gt;[^\s]*)\s\[(?&lt;qtype&gt;\w*)\]\svia\s(?&lt;rpz_qname&gt;[^\s]*)"  | rename qtype as "Query type"              | top limit=200 "Query type"</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">cell</option>
+        <option name="refresh.display">progressbar</option>
+        <format type="number" field="percent"></format>
+        <drilldown>
+          <set token="qtype">"[$click.value$]"</set>
+          <set token="form.qtype">$click.value$</set>
+        </drilldown>
+        <option name="wrap">true</option>
+        <option name="rowNumbers">false</option>
+        <option name="dataOverlayMode">heatmap</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Top Feed Name</title>
+      <table>
+        <search>
+          <query>index=ib_syslog RPZ-QNAME OR RPZ-IP process=named $domain_name$ $qtype$ $host$ $src$ $spt$ $matched_on$ $mitigation$ $feed_zone$ | rex field=msg "rpz\s(?&lt;matched_on&gt;[^\s]*)\s(?&lt;mitigation&gt;[^\s]*)\srewrite\s(?&lt;domain_name&gt;[^\s]*)\s\[(?&lt;qtype&gt;\w*)\]\svia\s(?&lt;rpz_qname&gt;[^\s]*)" | eval feed_zone_qname = substr(rpz_qname, len(domain_name) + 2, len(rpz_qname)) | rex field=rpz_qname "rpz-ip.(?&lt;feed_zone_ip&gt;.*)" | eval feed_zone=case(matched_on == "QNAME", feed_zone_qname, matched_on == "IP", feed_zone_ip) | rename feed_zone as "Feed Name"              | top limit=200 "Feed Name"</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">cell</option>
+        <format type="color" field="count">
+          <colorPalette type="minMidMax" maxColor="#D6563C" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="percent"></format>
+        <drilldown>
+          <set token="feed_zone">"$click.value$"</set>
+          <set token="form.feed_zone">$click.value$</set>
+        </drilldown>
+        <option name="wrap">true</option>
+        <option name="rowNumbers">false</option>
+        <option name="dataOverlayMode">heatmap</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Top Member</title>
+      <table>
+        <search>
+          <query>index=ib_syslog RPZ-QNAME OR RPZ-IP process=named $domain_name$ $qtype$ $host$ $src$ $spt$ $matched_on$ $mitigation$ $feed_zone$ | rename host as Member | top limit=200 "Member"</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">cell</option>
+        <format type="color" field="count">
+          <colorPalette type="minMidMax" maxColor="#D6563C" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="percent"></format>
+        <drilldown>
+          <set token="host">host="$click.value$"</set>
+          <set token="form.host">$click.value$</set>
+        </drilldown>
+        <option name="wrap">true</option>
+        <option name="rowNumbers">false</option>
+        <option name="dataOverlayMode">heatmap</option>
+      </table>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Top Response Code</title>
+      <table>
+        <search>
+          <query>index=ib_syslog RPZ-QNAME OR RPZ-IP process=named $domain_name$ $qtype$ $host$ $src$ $spt$ $matched_on$ $mitigation$ $feed_zone$  | rex field=msg "rpz\s(?&lt;matched_on&gt;[^\s]*)\s(?&lt;mitigation&gt;[^\s]*)\srewrite\s(?&lt;domain_name&gt;[^\s]*)\s\[(?&lt;qtype&gt;\w*)\]\svia\s(?&lt;rpz_qname&gt;[^\s]*)" | rename mitigation as "Response code"| top limit=200 "Response code"</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">cell</option>
+        <format type="color" field="count">
+          <colorPalette type="minMidMax" maxColor="#D6563C" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="percent"></format>
+        <drilldown>
+          <set token="mitigation">"|$click.value$|"</set>
+          <set token="form.mitigation">$click.value$</set>
+        </drilldown>
+        <option name="wrap">true</option>
+        <option name="rowNumbers">false</option>
+        <option name="dataOverlayMode">heatmap</option>
+      </table>
+    </panel>
+    <panel>
+      <title>Top Matched on</title>
+      <table>
+        <search>
+          <query>index=ib_syslog RPZ-QNAME OR RPZ-IP process=named $domain_name$ $qtype$ $host$ $src$ $spt$ $matched_on$ $mitigation$ $feed_zone$  | rex field=msg "rpz\s(?&lt;matched_on&gt;[^\s]*)\s(?&lt;mitigation&gt;[^\s]*)\srewrite\s(?&lt;domain_name&gt;[^\s]*)\s\[(?&lt;qtype&gt;\w*)\]\svia\s(?&lt;rpz_qname&gt;[^\s]*)" | rename matched_on as "Matched on"| top limit=200 "Matched on"</query>
+          <earliest>$time.earliest$</earliest>
+          <latest>$time.latest$</latest>
+        </search>
+        <option name="count">20</option>
+        <option name="drilldown">cell</option>
+        <format type="color" field="count">
+          <colorPalette type="minMidMax" maxColor="#D6563C" minColor="#FFFFFF"></colorPalette>
+          <scale type="minMidMax"></scale>
+        </format>
+        <format type="number" field="percent"></format>
+        <drilldown>
+          <set token="matched_on">"|RPZ-$click.value$|"</set>
+          <set token="form.matched_on">$click.value$</set>
+        </drilldown>
+        <option name="wrap">true</option>
+        <option name="rowNumbers">false</option>
+        <option name="dataOverlayMode">heatmap</option>
+      </table>
+    </panel>
+  </row>
+</form>
